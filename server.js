@@ -16,6 +16,10 @@ if (process.env.NODE_ENV === 'development') {   // DEV-ONLY
     app.use(morgan('dev'));
 }
 
+/* BODY PARSER */
+app.use(express.json());
+
+
 app.use('/api/v1/bootcamps', bootcamps);
 
 const server = app.listen(
