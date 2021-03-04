@@ -7,7 +7,23 @@ const Bootcamp = require('../models/Bootcamp');
 // @method      GET /api/v1/bootcamps
 // @access      Public
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-        const bootcamps = await Bootcamp.find();
+        //console.log(req.query);
+
+        let queryStr = JSON.stringify(req.query);   // JSON to string
+        queryStr = queryStr.replace(
+            /\b{gt|gte|lt|lte|in}\b/g, 
+            match => `$${ match }`
+        );
+        console.log(queryStr);
+
+        const query = Bootcamp.find(JSON.parse(queryStr)); // string to JSON
+
+        /*
+            ?averageCost[lte]=10000
+            ?careers=Business  (careers[in] didnt work)
+        */
+
+        const bootcamps = await query;
 
         res.status(200).json(
             {
