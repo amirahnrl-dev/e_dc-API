@@ -9,7 +9,7 @@ const Bootcamp = require('../models/Bootcamp');
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
         const reqQuery = { ...req.query };    
 
-        const removeFields = ['select'];
+        const removeFields = ['select', 'sort'];
         removeFields.forEach(param => delete reqQuery[param]);
 
         let queryStr = JSON.stringify(reqQuery);   // JSON to string
@@ -25,6 +25,14 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
             query = query.select(fields);
         }
 
+        if(req.query.sort) {
+            const sortBy = req.query.sort.split(',').join(' ');
+            query = query.sort(sortBy);
+        } else {
+            //default sort
+            query = query.sort('-createdAt');     // - descending
+        }
+
         const bootcamps = await query;
 
         /*
@@ -32,6 +40,11 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
             ?careers=Business  (careers[in] didnt work)
             ?select=name,description
             ?select=name,location.city,housing&housing=true
+
+            check sorting:
+            ?select=name,createAt                // default sorting
+            ?select=name,createAt&sort=name
+            ?select=name,createAt&sort=-name
         */
 
         res.status(200).json(
