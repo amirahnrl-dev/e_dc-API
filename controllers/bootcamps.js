@@ -7,23 +7,32 @@ const Bootcamp = require('../models/Bootcamp');
 // @method      GET /api/v1/bootcamps
 // @access      Public
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-        //console.log(req.query);
+        const reqQuery = { ...req.query };    
 
-        let queryStr = JSON.stringify(req.query);   // JSON to string
+        const removeFields = ['select'];
+        removeFields.forEach(param => delete reqQuery[param]);
+
+        let queryStr = JSON.stringify(reqQuery);   // JSON to string
         queryStr = queryStr.replace(
             /\b{gt|gte|lt|lte|in}\b/g, 
             match => `$${ match }`
         );
-        console.log(queryStr);
 
-        const query = Bootcamp.find(JSON.parse(queryStr)); // string to JSON
+        let query = Bootcamp.find(JSON.parse(queryStr)); // string to JSON
+
+        if(req.query.select) {
+            const fields = req.query.select.split(',').join(' ');
+            query = query.select(fields);
+        }
+
+        const bootcamps = await query;
 
         /*
             ?averageCost[lte]=10000
             ?careers=Business  (careers[in] didnt work)
+            ?select=name,description
+            ?select=name,location.city,housing&housing=true
         */
-
-        const bootcamps = await query;
 
         res.status(200).json(
             {
