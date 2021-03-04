@@ -9,7 +9,7 @@ const Bootcamp = require('../models/Bootcamp');
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
         const reqQuery = { ...req.query };    
 
-        const removeFields = ['select', 'sort'];
+        const removeFields = ['select', 'sort', 'page', 'limit'];
         removeFields.forEach(param => delete reqQuery[param]);
 
         let queryStr = JSON.stringify(reqQuery);   // JSON to string
@@ -33,7 +33,36 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
             query = query.sort('-createdAt');     // - descending
         }
 
+        /* PAGINATION */
+        const page = parseInt(req.query.page, 10) || 1;     // by default first page is 1
+        const limit = parseInt(req.query.limit, 10) || 1;   // by default 1 per page
+        const startIndex = (page - 1) * limit;
+        const endIndex = page * limit;
+        const total = await Bootcamp.countDocuments();      // total docs
+
+        query = query.skip(startIndex).limit(limit);
+
         const bootcamps = await query;
+
+        /* PAGINATION RESULT - FrontEnd Use */
+        /*
+            if last page -> no next link
+            if first page -> no prev link
+        */
+        const pagination = {};
+        if(endIndex < total) {
+            pagination.next = {
+                page: page + 1,
+                limit
+            }
+        }
+
+        if(startIndex > 0) {
+            pagination.prev = {
+                page: page -1,
+                limit
+            }
+        }
 
         /*
             ?averageCost[lte]=10000
@@ -45,12 +74,25 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
             ?select=name,createAt                // default sorting
             ?select=name,createAt&sort=name
             ?select=name,createAt&sort=-name
+
+            ?limit=2&select=name
+            ?page=2&limit=2&select=name          // 2 objects on the 2nd page
+
+            test pagination result:
+            ?page=2&select=name
+            ?select=name
+            ?page=4&select=name
+            ?page=2&limit=2&select=name
+            ?page=1&limit=2&select=name
+            ?limit=3&select=name
+            ?limit=4&select=name                // total object is 4, no next & prev
         */
 
         res.status(200).json(
             {
                 success: true,
                 count: bootcamps.length,
+                pagination: pagination,         // or just pagination (same name)
                 data: bootcamps
             }
         );
