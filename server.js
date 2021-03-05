@@ -6,6 +6,7 @@ const colors = require('colors');
 const connectDB = require('./config/db');
 const errorHandler = require('./middlewares/error');
 const bootcamps = require('./routes/bootcamps');
+const courses = require('./routes/courses');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,7 +22,7 @@ app.use(express.json());
 
 
 app.use('/api/v1/bootcamps', bootcamps);
-
+app.use('/api/v1/courses', courses);
 
 app.use(errorHandler);
 
